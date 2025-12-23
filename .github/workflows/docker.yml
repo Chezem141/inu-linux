@@ -56,35 +56,69 @@ jobs:
         with:
           name: app-image
       
-      - name: Prepare SSH key
+      - name: Debug secrets (remove in production)
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "Checking secrets..."
+          echo "SERVER_HOST length: ${#SERVER_HOST}"
+          echo "SERVER_USER length: ${#SERVER_USER}"
+          echo "APP_PORT length: ${#APP_PORT}"
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          APP_PORT: ${{ secrets.APP_PORT }}
       
-      - name: Copy image to server
+      - name: Deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          APP_PORT: ${{ secrets.APP_PORT }}
         run: |
-          scp -o StrictHostKeyChecking=no \
-              -i ~/.ssh/id_rsa \
-              app.tar \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
-      
-      - name: Deploy on server
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-              -i ~/.ssh/id_rsa \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            docker load -i /tmp/app.tar
-            docker stop app 2>/dev/null || true
-            docker rm app 2>/dev/null || true
-            docker run -d \
-              --name app \
-              --restart always \
-              -p ${{ secrets.APP_PORT }}:60080 \
-              -e DATABASE_URL=postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu \
-              app:latest
-            rm /tmp/app.tar
-          EOF
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "ERROR: SSH_PRIVATE_KEY is empty"
+            exit 1
+          fi
+          
+          if [ -z "$SERVER_HOST" ]; then
+            echo "ERROR: SERVER_HOST is empty"
+            exit 1
+          fi
+          
+          if [ -z "$SERVER_USER" ]; then
+            echo "ERROR: SERVER_USER is empty"
+            exit 1
+          fi
+          
+          if [ -z "$APP_PORT" ]; then
+            echo "WARNING: APP_PORT is empty, using default 60080"
+            APP_PORT=60080
+          fi
+          
+          echo "Deploying to $SERVER_USER@$SERVER_HOST:$APP_PORT"
+          
+          echo "$SSH_PRIVATE_KEY" > /tmp/key.pem
+          chmod 600 /tmp/key.pem
+          
+          cat app.tar | ssh -i /tmp/key.pem \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=30 \
+            $SERVER_USER@$SERVER_HOST "
+              cat > /tmp/app.tar
+              docker load -i /tmp/app.tar
+              
+              docker stop app 2>/dev/null || true
+              docker rm app 2>/dev/null || true
+              
+              docker run -d \
+                --name app \
+                --restart unless-stopped \
+                -p $APP_PORT:60080 \
+                -e DATABASE_URL=postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu \
+                app:latest
+                
+              rm -f /tmp/app.tar
+              echo 'Deployed successfully'
+            "
 
   verify:
     runs-on: ubuntu-latest

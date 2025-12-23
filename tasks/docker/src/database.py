@@ -1,9 +1,38 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+import os
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.pool import NullPool
+from dotenv import load_dotenv
 
+load_dotenv()
 
-engine = create_async_engine('postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu', echo=True)
-AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
+    "postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu"
+)
+
+# Оптимизация для тестов
+if os.getenv("TESTING", "false").lower() == "true":
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        poolclass=NullPool
+    )
+else:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
+        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
+        pool_pre_ping=True
+    )
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
 Base = declarative_base()
 
 
@@ -14,4 +43,11 @@ async def init_db():
 
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()
+
+
+async def close_db():
+    await engine.dispose()

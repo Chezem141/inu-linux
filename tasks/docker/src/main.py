@@ -1,15 +1,59 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import text
 from src import models, schemas
-from src.database import init_db, get_db
+from src.database import init_db, get_db, close_db
 
-app = FastAPI()
+app = FastAPI(
+    title="User CRUD API",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 
 @app.on_event("startup")
 async def startup():
     await init_db()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await close_db()
+
+
+@app.get("/health")
+async def health_check(db: AsyncSession = Depends(get_db)):
+    try:
+        # Проверяем подключение к БД
+        await db.execute(text("SELECT 1"))
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "service": "user-crud-api"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Database connection failed: {str(e)}"
+        )
+
+
+@app.get("/")
+async def root():
+    return {
+        "message": "User CRUD API",
+        "version": "1.0.0",
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/health",
+            "create_user": "POST /users/",
+            "list_users": "GET /users/",
+            "get_user": "GET /users/{user_id}",
+            "update_user": "PATCH /users/{user_id}",
+            "delete_user": "DELETE /users/{user_id}"
+        }
+    }
 
 
 @app.post("/users/", response_model=schemas.User)

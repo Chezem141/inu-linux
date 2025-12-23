@@ -10,7 +10,7 @@ test:
 	pytest tests/ -v
 
 run:
-	uvicorn src.main:app --reload --host 0.0.0.0 --port 60080
+	uvicorn src.main:app --reload --host 0.0.0.0 --port 8029
 
 build:
 	docker build -t app:latest .

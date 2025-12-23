@@ -20,10 +20,10 @@ services:
   app:
     build: .
     ports:
-      - "60080:60080"
+      - "8029:8029"
     environment:
       DATABASE_URL: postgresql+psycopg://kubsu:kubsu@db:5432/kubsu
-      PORT: 60080
+      PORT: 8029
     depends_on:
       db:
         condition: service_healthy

@@ -32,7 +32,7 @@ COPY --from=builder /app/pyproject.toml .
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
-ENV PORT=60080
+ENV PORT=8029
 EXPOSE ${PORT}
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

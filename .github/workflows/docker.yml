@@ -56,7 +56,7 @@ jobs:
         with:
           name: app-image
       
-      - name: Debug secrets (remove in production)
+      - name: Debug secrets
         run: |
           echo "Checking secrets..."
           echo "SERVER_HOST length: ${#SERVER_HOST}"
@@ -90,8 +90,8 @@ jobs:
           fi
           
           if [ -z "$APP_PORT" ]; then
-            echo "WARNING: APP_PORT is empty, using default 60080"
-            APP_PORT=60080
+            echo "WARNING: APP_PORT is empty, using default 8029"
+            APP_PORT=8029
           fi
           
           echo "Deploying to $SERVER_USER@$SERVER_HOST:$APP_PORT"
@@ -112,7 +112,7 @@ jobs:
               docker run -d \
                 --name app \
                 --restart unless-stopped \
-                -p $APP_PORT:60080 \
+                -p $APP_PORT:8029 \
                 -e DATABASE_URL=postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu \
                 app:latest
                 

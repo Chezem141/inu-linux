@@ -11,7 +11,6 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu"
 )
 
-# Оптимизация для тестов
 if os.getenv("TESTING", "false").lower() == "true":
     engine = create_async_engine(
         DATABASE_URL,

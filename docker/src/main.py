@@ -25,7 +25,6 @@ async def shutdown():
 @app.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db)):
     try:
-        # Проверяем подключение к БД
         await db.execute(text("SELECT 1"))
         return {
             "status": "healthy",

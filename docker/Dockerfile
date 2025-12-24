@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir .
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-FROM python:3.10.2-slim
+FROM python:3.10.2-alpine
 
 WORKDIR /app
 

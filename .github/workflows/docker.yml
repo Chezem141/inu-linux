@@ -65,6 +65,12 @@ jobs:
       - name: Load and deploy
         run: |
           podman load -i app.tar
+
+          if lsof -ti:8029 > /dev/null 2>&1; then
+            echo "Port 8029 is in use. Killing processes..."
+            lsof -ti:8029 | xargs kill -9 2>/dev/null || true
+            sleep 2
+          fi
           
           podman stop app 2>/dev/null || true
           podman rm app 2>/dev/null || true

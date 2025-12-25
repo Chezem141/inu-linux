@@ -7,6 +7,8 @@ COPY pyproject.toml ./
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    libgcc-s1 \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv /opt/venv

@@ -76,6 +76,7 @@ jobs:
           podman rm app 2>/dev/null || true
           
           podman run -d \
+	    --replace \
             --name app \
             --restart unless-stopped \
             -p 8029:8029 \

@@ -81,6 +81,7 @@ jobs:
             --restart unless-stopped \
             -p 8029:8029 \
             -e PORT=8029 \
+            --network host \
             -e DATABASE_URL=postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu \
             docker.io/library/app:latest
       

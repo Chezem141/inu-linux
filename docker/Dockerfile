@@ -20,9 +20,14 @@ RUN pip install --no-cache-dir .
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-FROM python:3.10.2-alpine
+FROM python:3.10.2-slim
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    libgcc-s1 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"

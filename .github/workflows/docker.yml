@@ -58,51 +58,25 @@ jobs:
         with:
           name: app-image
       
-      - name: Load image to Podman
+      - name: Deploy
         run: |
           podman load -i app.tar
           
-          echo "Loaded images:"
-          podman images
+          IMAGE_NAME=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep app | head -1)
+          echo "Image loaded as: $IMAGE_NAME"
           
-          podman tag docker.io/library/app:latest fastapi-app:latest
-      
-      - name: Stop old container
-        run: |
-          podman stop fastapi-app 2>/dev/null || true
-          podman rm fastapi-app 2>/dev/null || true
-      
-      - name: Start new container on port 8029
-        run: |
+          podman stop app 2>/dev/null || true
+          podman rm app 2>/dev/null || true
+          
           podman run -d \
-            --name fastapi-app \
+            --name app \
             --restart unless-stopped \
             -p 8029:8029 \
             -e PORT=8029 \
             -e DATABASE_URL=postgresql+asyncpg://kubsu:kubsu@127.0.0.1:5432/kubsu \
-            fastapi-app:latest
-      
-      - name: Verify deployment
-        run: |
-          echo "Waiting for app to start..."
+            "$IMAGE_NAME"
+          
           sleep 5
+          podman ps
           
-          echo "Container status:"
-          podman ps --filter name=fastapi-app
-          
-          if ! podman ps --format "{{.Names}}" | grep -q fastapi-app; then
-            echo "Container not running"
-            podman logs fastapi-app 2>/dev/null || true
-            exit 1
-          fi
-          
-          if curl -s http://localhost:8029/health >/dev/null; then
-            echo "App is healthy on port 8029"
-          else
-            echo "Health check failed on port 8029"
-            podman logs fastapi-app --tail 20
-            exit 1
-          fi
-      
-      - name: Cleanup old images
-        run: podman image prune -af --filter "until=24h"
+          curl -f http://localhost:8029/health && echo "Success" || { echo "Failed"; podman logs app; exit 1; }

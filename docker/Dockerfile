@@ -35,7 +35,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/pyproject.toml .
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 USER appuser
 
 ENV PORT=8029

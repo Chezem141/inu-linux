@@ -58,12 +58,13 @@ jobs:
         with:
           name: app-image
       
-      - name: Deploy
+      - name: Reset Podman state
+        run: |
+          podman system migrate 2>/dev/null || echo "Podman migrate failed, continuing..."
+      
+      - name: Load and deploy
         run: |
           podman load -i app.tar
-          
-          IMAGE_NAME=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep app | head -1)
-          echo "Image loaded as: $IMAGE_NAME"
           
           podman stop app 2>/dev/null || true
           podman rm app 2>/dev/null || true
@@ -74,9 +75,12 @@ jobs:
             -p 8029:8029 \
             -e PORT=8029 \
             -e DATABASE_URL=postgresql+asyncpg://kubsu:kubsu@127.0.0.1:5432/kubsu \
-            "$IMAGE_NAME"
-          
+            docker.io/library/app:latest
+      
+      - name: Verify
+        run: |
           sleep 5
-          podman ps
-          
-          curl -f http://localhost:8029/health && echo "Success" || { echo "Failed"; podman logs app; exit 1; }
+          curl -f http://localhost:8029/health && echo "Deployed" || { podman logs app; exit 1; }
+      
+      - name: Cleanup
+        run: podman image prune -af 2>/dev/null || true

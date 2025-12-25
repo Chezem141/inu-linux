@@ -60,11 +60,12 @@ jobs:
       
       - name: Load image to Podman
         run: |
-          podman load -i app.tar || \
-            { echo "Trying alternative load method..."; \
-              tar -xf app.tar -O | podman load; }
+          podman load -i app.tar
           
-          podman tag localhost/app:latest fastapi-app:latest
+          echo "Loaded images:"
+          podman images
+          
+          podman tag docker.io/library/app:latest fastapi-app:latest
       
       - name: Stop old container
         run: |
@@ -86,9 +87,12 @@ jobs:
           echo "Waiting for app to start..."
           sleep 5
           
-          if ! podman ps | grep -q fastapi-app; then
+          echo "Container status:"
+          podman ps --filter name=fastapi-app
+          
+          if ! podman ps --format "{{.Names}}" | grep -q fastapi-app; then
             echo "Container not running"
-            podman logs fastapi-app
+            podman logs fastapi-app 2>/dev/null || true
             exit 1
           fi
           

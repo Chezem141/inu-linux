@@ -48,8 +48,8 @@ jobs:
             sh -c "sleep 3 && pytest tests/ -v"
 
   deploy:
-    needs: [ test ]
     runs-on: self-hosted
+    needs: [ test ]
     if: github.ref == 'refs/heads/master'
     
     steps:
@@ -58,9 +58,12 @@ jobs:
         with:
           name: app-image
       
-      - name: Load image
+      - name: Load image to Podman
         run: |
-          podman load -i app.tar
+          podman load -i app.tar || \
+            { echo "Trying alternative load method..."; \
+              tar -xf app.tar -O | podman load; }
+          
           podman tag localhost/app:latest fastapi-app:latest
       
       - name: Stop old container
@@ -68,15 +71,34 @@ jobs:
           podman stop fastapi-app 2>/dev/null || true
           podman rm fastapi-app 2>/dev/null || true
       
-      - name: Start new container
+      - name: Start new container on port 8029
         run: |
           podman run -d \
-            --replace \
             --name fastapi-app \
             --restart unless-stopped \
-            -p ${{ secrets.APP_PORT || 8029 }}:8029 \
-            -e DATABASE_URL=postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu \
-            localhost/fastapi-app:latest
+            -p 8029:8029 \
+            -e PORT=8029 \
+            -e DATABASE_URL=postgresql+asyncpg://kubsu:kubsu@127.0.0.1:5432/kubsu \
+            fastapi-app:latest
       
-      - name: Cleanup
+      - name: Verify deployment
+        run: |
+          echo "Waiting for app to start..."
+          sleep 5
+          
+          if ! podman ps | grep -q fastapi-app; then
+            echo "Container not running"
+            podman logs fastapi-app
+            exit 1
+          fi
+          
+          if curl -s http://localhost:8029/health >/dev/null; then
+            echo "App is healthy on port 8029"
+          else
+            echo "Health check failed on port 8029"
+            podman logs fastapi-app --tail 20
+            exit 1
+          fi
+      
+      - name: Cleanup old images
         run: podman image prune -af --filter "until=24h"

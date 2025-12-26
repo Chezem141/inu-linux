@@ -15,7 +15,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[test]"
 
 COPY src/ ./src/
 COPY tests/ ./tests/
@@ -33,6 +33,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/tests ./tests
 
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 USER appuser

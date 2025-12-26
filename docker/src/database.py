@@ -11,21 +11,7 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu"
 )
 
-# Оптимизация для тестов
-if os.getenv("TESTING", "false").lower() == "true":
-    engine = create_async_engine(
-        DATABASE_URL,
-        echo=False,
-        poolclass=NullPool
-    )
-else:
-    engine = create_async_engine(
-        DATABASE_URL,
-        echo=True,
-        pool_size=int(os.getenv("DB_POOL_SIZE", "10")),
-        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "20")),
-        pool_pre_ping=True
-    )
+engine = create_async_engine(DATABASE_URL, echo=True)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

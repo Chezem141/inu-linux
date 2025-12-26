@@ -15,7 +15,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[test]"
 
 COPY src/ ./src/
 COPY tests/ ./tests/

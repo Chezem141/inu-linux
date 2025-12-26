@@ -30,17 +30,6 @@ docker-compose.override.yml
 *.log
 logs/
 
-tests/
-test_*.py
-conftest.py
-pytest.ini
-
-.env*
-
-*.db
-*.sqlite
-postgres_data/
-
 var/log/
 
 .mypy_cache/

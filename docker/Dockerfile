@@ -33,7 +33,6 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY --from=builder /app/src ./src
-COPY --from=builder /app/pyproject.toml .
 
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 USER appuser

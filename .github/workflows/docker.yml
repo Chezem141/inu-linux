@@ -84,6 +84,12 @@ jobs:
             --network host \
             -e DATABASE_URL=postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu \
             docker.io/library/app:latest
+
+      - name: Load and check image
+        run: |
+          podman load -i app.tar
+          echo "Image loaded successfully"
+          podman images app:latest
       
       - name: Verify
         run: |

@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir .
 
 COPY src/ ./src/
-COPY tests/ ./tests/
 
 FROM python:3.10.2-slim
 

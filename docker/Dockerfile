@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir .
 
 COPY src/ ./src/
 
+RUN find /opt/venv/ -type f -name '*.pyc' -delete && \
+    find /opt/venv/ -type d -name '__pycahce__' -exec rm -rf {}
+
 FROM python:3.10.2-slim
 
 WORKDIR /app

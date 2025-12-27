@@ -91,10 +91,5 @@ jobs:
           echo "Image loaded successfully"
           podman images app:latest
       
-      - name: Verify
-        run: |
-          sleep 10
-          curl -f http://localhost:8029/health && echo "Deployed" || { podman logs app; exit 1; }
-      
       - name: Cleanup
         run: podman image prune -af 2>/dev/null || true

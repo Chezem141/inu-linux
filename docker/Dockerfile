@@ -14,7 +14,11 @@ COPY src/ ./src/
 
 RUN find /opt/venv/ -type f -name '*.pyc' -delete && \
     find /opt/venv/ -type d -name '__pycahce__' -exec rm -rf {} + && \
-    find /opt/venv -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true    
+    find /opt/venv -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "README" -delete && \
+    find /opt/venv -name "*.txt" -delete && \
+    find /opt/venv -name "*.md" -delete
 
 FROM python:3.10.2-slim
 

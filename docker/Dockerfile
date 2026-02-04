@@ -14,8 +14,9 @@ COPY src/ ./src/
 
 RUN find /opt/venv/ -type f -name '*.pyc' -delete && \
     find /opt/venv/ -type d -name '__pycache__' -exec rm -rf {} + && \
-    find /opt/venv -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
-
+    find /opt/venv -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    find /opt/venv -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+    
 FROM python:3.10.2-slim
 
 WORKDIR /app

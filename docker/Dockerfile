@@ -21,6 +21,8 @@ FROM python:3.10.2-slim
 
 WORKDIR /app
 
+RUN apt-get clean
+
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
